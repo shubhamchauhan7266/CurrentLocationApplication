@@ -35,11 +35,10 @@ import java.util.List;
 import java.util.Locale;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener {
-    private double latitude;
-    private double longitude;
-    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = (long) 0.0000001;
-    private static final long MIN_TIME_BW_UPDATES = 5000;
-    private LocationManager mLocationManager;
+    private double mLatitude;
+    private double mLongitude;
+    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = (long) 0.000001;
+    private static final long MIN_TIME_BW_UPDATES = 60000;
     private GoogleMap mGoogleMap = null;
 
     // AIzaSyCUTMsxe0fumDIwSs_X4yhjtqH-e3LY5Kw
@@ -113,72 +112,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .snippet("" + getAddress(28.6562, 77.2410))
                 .position(redFort));
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(redFort, 13));
-       /* googleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-
-            @Override
-            public View getInfoWindow(Marker marker) {
-                return null;
-            }
-
-            @Override
-            public View getInfoContents(Marker marker) {
-                LinearLayout info = new LinearLayout(MapsActivity.this);
-                info.setOrientation(LinearLayout.VERTICAL);
-
-                TextView title = new TextView(MapsActivity.this);
-                title.setGravity(Gravity.CENTER);
-                title.setTypeface(null, Typeface.BOLD);
-                title.setText("Red Fort");
-
-                TextView snippet = new TextView(MapsActivity.this);
-                snippet.setText("" + getAddress(28.6562, 77.2410));
-
-                info.addView(title);
-                info.addView(snippet);
-
-                return info;
-            }
-        });*/
-
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        latitude = location.getLatitude();
-        longitude = location.getLongitude();
-        LatLng currentLocation = new LatLng(latitude, longitude);
+        mLatitude = location.getLatitude();
+        mLongitude = location.getLongitude();
+        LatLng currentLocation = new LatLng(mLatitude, mLongitude);
         if (mGoogleMap != null) {
             mGoogleMap.addMarker(new MarkerOptions()
                     .title("Current Location")
-                    .snippet("" + getAddress(latitude, longitude))
+                    .snippet("" + getAddress(mLatitude, mLongitude))
                     .position(currentLocation));
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 13));
-            /*mGoogleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-
-                @Override
-                public View getInfoWindow(Marker marker) {
-                    return null;
-                }
-
-                @Override
-                public View getInfoContents(Marker marker) {
-                    LinearLayout info = new LinearLayout(MapsActivity.this);
-                    info.setOrientation(LinearLayout.VERTICAL);
-
-                    TextView title = new TextView(MapsActivity.this);
-                    title.setGravity(Gravity.CENTER);
-                    title.setTypeface(null, Typeface.BOLD);
-                    title.setText("Current Location");
-
-                    TextView snippet = new TextView(MapsActivity.this);
-                    snippet.setText("" + getAddress(latitude, longitude));
-
-                    info.addView(title);
-                    info.addView(snippet);
-
-                    return info;
-                }
-            });*/
         }
 
     }
@@ -202,9 +148,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void getLocation() {
         try {
 
-            mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            boolean isGPSEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-            boolean isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
                 getLocation();
@@ -223,9 +169,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         Manifest.permission.INTERNET}, 10);
                     }
 
-                    mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MapsActivity.MIN_TIME_BW_UPDATES, MapsActivity.MIN_DISTANCE_CHANGE_FOR_UPDATES, MapsActivity.this);
-                    if (mLocationManager != null) {
-                        location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MapsActivity.MIN_TIME_BW_UPDATES, MapsActivity.MIN_DISTANCE_CHANGE_FOR_UPDATES, MapsActivity.this);
+                    if (locationManager != null) {
+                        location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                         if (location != null) {
                             Toast.makeText(this, "isNetwork Enables", Toast.LENGTH_SHORT).show();
                         }
@@ -234,10 +180,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //get the location by gps
                 if (isGPSEnabled) {
                     if (location == null) {
-                        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
                         //Log.d("GPS Enabled", "GPS Enabled");
-                        if (mLocationManager != null) {
-                            location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                        if (locationManager != null) {
+                            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                             if (location != null) {
                                 Toast.makeText(this, "is Gps Enables", Toast.LENGTH_SHORT).show();
                             }
