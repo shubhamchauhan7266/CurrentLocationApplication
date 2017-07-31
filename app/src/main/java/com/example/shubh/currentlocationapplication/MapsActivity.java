@@ -3,12 +3,14 @@ package com.example.shubh.currentlocationapplication;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -31,8 +33,18 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -41,9 +53,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private double mLongitude;
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = (long) 0.000001;
     private static final long MIN_TIME_BW_UPDATES = 60000;
-    private GoogleMap mGoogleMap = null;
+    public GoogleMap mGoogleMap = null;
     private EditText mEditTextSource;
     private EditText mEditTextDestination;
+    private LatLng mOrigin=null;
+    private LatLng mDest=null;
+    private static int count=0;
+    private ArrayList<LatLng> mMarkerPoints;
+    private MarkerOptions mOriginMarkerOption;
+    private MarkerOptions mDestMarkerOption;
+    private Marker mMarkerOrigin;
+    private Marker mMarkerDest;
+
 
     // AIzaSyCUTMsxe0fumDIwSs_X4yhjtqH-e3LY5Kw
 
@@ -55,6 +76,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mEditTextSource=(EditText)findViewById(R.id.editText_source);
         mEditTextDestination=(EditText)findViewById(R.id.editText_destination);
+        mMarkerPoints=new ArrayList<>();
+        mOriginMarkerOption=new MarkerOptions();
+        mDestMarkerOption=new MarkerOptions();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googleMap);
         getLocation();
         mapFragment.getMapAsync(this);
@@ -117,6 +141,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .title("Red Fort")
                 .snippet("" + getAddress(28.6562, 77.2410))
                 .position(redFort));
+        mMarkerPoints.add(redFort);
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(redFort, 13));
     }
 
@@ -130,6 +155,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .title("Current Location")
                     .snippet("" + getAddress(mLatitude, mLongitude))
                     .position(currentLocation));
+            mMarkerPoints.add(currentLocation);
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 13));
         }
 
@@ -228,24 +254,185 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapClick(LatLng latLng) {
-        /*if(latLngList.size() > 0){
-            //refreshMap(mMap);
-            latLngList.clear();
+
+       /* // Already two locations
+        if (mMarkerPoints.size() > 1) {
+            mMarkerPoints.clear();
+            mGoogleMap.clear();
+        }*/
+
+        if(mEditTextSource.hasFocus()){
+            if(mOrigin!=null){
+                mMarkerPoints.remove(mOrigin);
+                count--;
+            }else {
+                mMarkerOrigin=mGoogleMap.addMarker(mOriginMarkerOption.position(latLng));
+            }
+            mOrigin=latLng;
+            mMarkerOrigin.setPosition(mOrigin);
+            count++;
+            mEditTextSource.setText(getAddress(latLng.latitude,latLng.longitude));
+            mMarkerPoints.add(mOrigin);
         }
-        latLngList.add(latLng);
-        Log.d(TAG, "Marker number " + latLngList.size());*/
-        //mGoogleMap.addMarker(yourLocationMarker);
-        mGoogleMap.addMarker(new MarkerOptions().position(latLng));
-        if(mEditTextSource.hasFocus())
-        mEditTextSource.setText(getAddress(latLng.latitude,latLng.longitude));
-        else if(mEditTextDestination.hasFocus())
+        else if(mEditTextDestination.hasFocus()){
+            if(mDest!=null){
+                mMarkerPoints.remove(mDest);
+                count--;
+            }else {
+                mMarkerDest=mGoogleMap.addMarker(mDestMarkerOption.position(latLng));
+            }
+            mDest=latLng;
+            mMarkerDest.setPosition(mDest);
+            count++;
             mEditTextDestination.setText(getAddress(latLng.latitude,latLng.longitude));
-        //LatLng defaultLocation = yourLocationMarker.getPosition();
-        //LatLng destinationLocation = latLng;
-        //use Google Direction API to get the route between these Locations
-        //String directionApiPath = Helper.getUrl(String.valueOf(defaultLocation.latitude), String.valueOf(defaultLocation.longitude),
-                //String.valueOf(destinationLocation.latitude), String.valueOf(destinationLocation.longitude));
-        //Log.d(TAG, "Path " + directionApiPath);
-        //getDirectionFromDirectionApiServer(directionApiPath);
+            mMarkerPoints.add(mDest);
+        }
+
+        if(count>=2){
+            String url = getDirectionsUrl(mOrigin, mDest);
+            DownloadTask downloadTask=new DownloadTask();
+            downloadTask.execute(url);
+        }
+
+    }
+
+    public String getDirectionsUrl(LatLng origin, LatLng dest) {
+
+        // Origin of route
+        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+
+        // Destination of route
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+        // Sensor enabled
+        String sensor = "sensor=false";
+        String mode = "mode=driving";
+
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&" + mode;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+
+
+        return url;
+    }
+
+    public String downloadUrl(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            urlConnection.connect();
+
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    public class DownloadTask extends AsyncTask<String,Integer,String> {
+        @Override
+        protected String doInBackground(String... url) {
+
+            String data = "";
+
+            try {
+                data = downloadUrl(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTask parserTask = new ParserTask();
+
+
+            parserTask.execute(result);
+
+        }
+
+
+    }
+
+    public class ParserTask extends AsyncTask<Object, Object, List<List<HashMap<String, String>>>> {
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(Object... jsonData) {
+
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject((String) jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList points = null;
+            PolylineOptions lineOptions = null;
+            MarkerOptions markerOptions = new MarkerOptions();
+
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList();
+                lineOptions = new PolylineOptions();
+
+                List<HashMap<String, String>> path = result.get(i);
+
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap point = path.get(j);
+
+                    double lat = Double.parseDouble(String.valueOf(point.get("lat")));
+                    double lng = Double.parseDouble(String.valueOf(point.get("lng")));
+                    LatLng position = new LatLng(lat, lng);
+
+                    points.add(position);
+                }
+
+                lineOptions.addAll(points);
+                lineOptions.width(12);
+                lineOptions.color(Color.RED);
+                lineOptions.geodesic(true);
+
+            }
+// Drawing polyline in the Google Map for the i-th route
+            mGoogleMap.addPolyline(lineOptions);
+        }
     }
 }
