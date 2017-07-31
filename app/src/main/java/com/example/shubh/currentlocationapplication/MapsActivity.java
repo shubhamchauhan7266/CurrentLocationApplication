@@ -16,8 +16,10 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,12 +36,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener,GoogleMap.OnMapClickListener {
     private double mLatitude;
     private double mLongitude;
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = (long) 0.000001;
     private static final long MIN_TIME_BW_UPDATES = 60000;
     private GoogleMap mGoogleMap = null;
+    private EditText mEditTextSource;
+    private EditText mEditTextDestination;
 
     // AIzaSyCUTMsxe0fumDIwSs_X4yhjtqH-e3LY5Kw
 
@@ -49,6 +53,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        mEditTextSource=(EditText)findViewById(R.id.editText_source);
+        mEditTextDestination=(EditText)findViewById(R.id.editText_destination);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googleMap);
         getLocation();
         mapFragment.getMapAsync(this);
@@ -87,7 +93,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-
+        mGoogleMap.setOnMapClickListener(this);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             //TODO: Consider calling
@@ -218,5 +224,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
         }
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        /*if(latLngList.size() > 0){
+            //refreshMap(mMap);
+            latLngList.clear();
+        }
+        latLngList.add(latLng);
+        Log.d(TAG, "Marker number " + latLngList.size());*/
+        //mGoogleMap.addMarker(yourLocationMarker);
+        mGoogleMap.addMarker(new MarkerOptions().position(latLng));
+        if(mEditTextSource.hasFocus())
+        mEditTextSource.setText(getAddress(latLng.latitude,latLng.longitude));
+        else if(mEditTextDestination.hasFocus())
+            mEditTextDestination.setText(getAddress(latLng.latitude,latLng.longitude));
+        //LatLng defaultLocation = yourLocationMarker.getPosition();
+        //LatLng destinationLocation = latLng;
+        //use Google Direction API to get the route between these Locations
+        //String directionApiPath = Helper.getUrl(String.valueOf(defaultLocation.latitude), String.valueOf(defaultLocation.longitude),
+                //String.valueOf(destinationLocation.latitude), String.valueOf(destinationLocation.longitude));
+        //Log.d(TAG, "Path " + directionApiPath);
+        //getDirectionFromDirectionApiServer(directionApiPath);
     }
 }
