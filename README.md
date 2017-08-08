@@ -1,31 +1,28 @@
 Current Location Application
 ===================================
 
->This project is a sample for using Volley library in your project.I have used few methods of Volley in this project such as:
+>This project is a sample for using google map API for generating a path between two location:
 
-- StringRequest
-- StringRequest with Post
-- ImageRequest
-- JsonObjectRequest
-- Cancel rquest by TAG
-- Cancel all requests
-- JsonObjectRequest with cookies
-- Set Priority
+- get current location
+- set marker
+- draw a polyline
+- GoogleMap.OnMapClickListener
+- decoding-polylines-from-google-maps-direction-api-with-java
 
 
 
 Pre-requisites
 --------------
 
-- Android SDK v23
-- Android Build Tools v23.0.2
+- Android SDK v26
+- Android Build Tools v26.0.0
 
 
-How to install Volley In your Project
+How to use this app in your android mobile
 --------------
-1. Check out from this link https://android.googlesource.com/platform/frameworks/volley
-2. Then in Android Studio File --> New --> Import Module --> then select and add in dependencies like compile project(':volley')
-3. build the gradle.
+1. fistly, select a pickup location by click on the map.
+2. Then select a drop location by click on the map.
+3. now click on the generate path button to get path between these two locations.
 
 
 
