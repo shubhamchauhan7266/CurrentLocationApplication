@@ -1,4 +1,4 @@
-PolyLine Draw Map Sample
+PolyLine Google Map Sample
 ===================================
 
 >This project is a sample for using google map API for generating a PolyLine between two location:
