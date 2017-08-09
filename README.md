@@ -27,6 +27,8 @@ How to use this app in your android mobile
 
 
 
-![project](https://user-images.githubusercontent.com/30496566/29071997-961c5d04-7c63-11e7-81b7-5da116ce1417.png)
+![path](https://user-images.githubusercontent.com/30496566/29108481-c1b71e1a-7cfc-11e7-8056-23aae051b490.png)
+![current_location](https://user-images.githubusercontent.com/30496566/29108491-cec8725c-7cfc-11e7-92e6-24f889dfe574.png)
+![homepage](https://user-images.githubusercontent.com/30496566/29108500-d8150c30-7cfc-11e7-9617-e83941b2398c.png)
 
 
