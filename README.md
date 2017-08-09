@@ -1,7 +1,7 @@
-Current Location Application
+PolyLine Draw Map Sample
 ===================================
 
->This project is a sample for using google map API for generating a path between two location:
+>This project is a sample for using google map API for generating a PolyLine between two location:
 
 - get current location
 - set marker
