@@ -1,45 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-tools:context=".MapsActivity">
-
-<fragment
-    android:id="@+id/googleMap"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    class="com.google.android.gms.maps.SupportMapFragment"
-    />
+    tools:context=".MapsActivity">
+
+    <fragment
+        android:id="@+id/googleMap"
+        class="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <EditText
         android:id="@+id/editText_source"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:hint="pickup location"
-        android:gravity="center"
-        android:inputType="text"
-        android:ems="10"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:padding="5dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginEnd="50dp"
         android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"/>
+        android:layout_marginRight="50dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/colorWhite"
+        android:ellipsize="end"
+        android:ems="10"
+        android:gravity="center"
+        android:hint="@string/pickup_location"
+        android:inputType="text"
+        android:maxLines="1"
+        android:padding="5dp" />
+
     <EditText
         android:id="@+id/editText_destination"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:hint="drop location"
-        android:gravity="center"
-        android:ems="10"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:padding="5dp"
-        android:inputType="text"
+        android:layout_below="@+id/editText_source"
+        android:layout_marginEnd="50dp"
         android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_below="@+id/editText_source"/>
-
-
+        android:layout_marginRight="50dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="5dp"
+        android:background="@color/colorWhite"
+        android:ellipsize="end"
+        android:ems="10"
+        android:gravity="center"
+        android:hint="@string/drop_location"
+        android:inputType="text"
+        android:maxLines="1"
+        android:padding="5dp" />
 </RelativeLayout>

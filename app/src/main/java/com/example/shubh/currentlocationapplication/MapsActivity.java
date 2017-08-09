@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
@@ -48,25 +47,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener,GoogleMap.OnMapClickListener {
+/**
+ * <h1><font color="orange">MapsActivity</font></h1>
+ * Activity class for Rendering the Google Map.
+ *
+ * @author Shubham Chauhan
+ */
+
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMapClickListener {
     private double mLatitude;
     private double mLongitude;
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = (long) 0.000001;
     private static final long MIN_TIME_BW_UPDATES = 60000;
-    public GoogleMap mGoogleMap = null;
+    private GoogleMap mGoogleMap = null;
     private EditText mEditTextSource;
     private EditText mEditTextDestination;
-    private LatLng mOrigin=null;
-    private LatLng mDest=null;
-    private static int count=0;
+    private LatLng mOrigin = null;
+    private LatLng mDest = null;
+    private static int mCount = 0;
     private ArrayList<LatLng> mMarkerPoints;
     private MarkerOptions mOriginMarkerOption;
     private MarkerOptions mDestMarkerOption;
     private Marker mMarkerOrigin;
     private Marker mMarkerDest;
-
-
-    // AIzaSyCUTMsxe0fumDIwSs_X4yhjtqH-e3LY5Kw
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -74,26 +77,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        mEditTextSource=(EditText)findViewById(R.id.editText_source);
-        mEditTextDestination=(EditText)findViewById(R.id.editText_destination);
-        mMarkerPoints=new ArrayList<>();
-        mOriginMarkerOption=new MarkerOptions();
-        mDestMarkerOption=new MarkerOptions();
+        mEditTextSource = (EditText) findViewById(R.id.editText_source);
+        mEditTextDestination = (EditText) findViewById(R.id.editText_destination);
+        mMarkerPoints = new ArrayList<>();
+        mOriginMarkerOption = new MarkerOptions();
+        mDestMarkerOption = new MarkerOptions();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.googleMap);
         getLocation();
         mapFragment.getMapAsync(this);
     }
 
 
-    //getting Address
+    /**
+     * Method is used to get address by latitude and longitude
+     */
+
     public String getAddress(double lat, double lon) {
         Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
-        String address = "";
+        String address;
 
         try {
-            List e = geocoder.getFromLocation(lat, lon, 1);
+            List<Address> e = geocoder.getFromLocation(lat, lon, 1);
             if (e != null) {
-                Address returnedAddress = (Address) e.get(0);
+                Address returnedAddress = e.get(0);
                 StringBuilder strReturnedAddress = new StringBuilder("");
 
                 for (int i = 0; i < returnedAddress.getMaxAddressLineIndex(); ++i) {
@@ -113,6 +119,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+    /**
+     * Method is called when map is ready .
+     */
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -128,23 +138,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Manifest.permission.INTERNET}, 10);
             return;
         }
-
-        loadMap(googleMap);
         googleMap.setMyLocationEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
     }
 
-    private void loadMap(GoogleMap googleMap) {
-        LatLng redFort = new LatLng(28.6562, 77.2410);
-        googleMap.addMarker(new MarkerOptions()
-                .title("Red Fort")
-                .snippet("" + getAddress(28.6562, 77.2410))
-                .position(redFort));
-        mMarkerPoints.add(redFort);
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(redFort, 13));
-    }
-
+    /**
+     * Method is used for updating a current location .
+     * this method is called when current location is changed.
+     */
     @Override
     public void onLocationChanged(Location location) {
         mLatitude = location.getLatitude();
@@ -156,6 +158,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .snippet("" + getAddress(mLatitude, mLongitude))
                     .position(currentLocation));
             mMarkerPoints.add(currentLocation);
+            mGoogleMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+                @Override
+                public View getInfoWindow(Marker marker) {
+                    return null;
+                }
+
+                @Override
+                public View getInfoContents(Marker marker) {
+                    LinearLayout info = new LinearLayout(MapsActivity.this);
+                    info.setOrientation(LinearLayout.VERTICAL);
+
+                    TextView title = new TextView(MapsActivity.this);
+                    title.setGravity(Gravity.CENTER);
+                    title.setTypeface(null, Typeface.BOLD);
+                    title.setText(R.string.current_location);
+
+                    TextView snippet = new TextView(MapsActivity.this);
+                    snippet.setText(getAddress(mLatitude, mLongitude));
+
+                    info.addView(title);
+                    info.addView(snippet);
+
+                    return info;
+                }
+            });
             mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 13));
         }
 
@@ -176,6 +204,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    /**
+     * Method is used to find current location by both Network Provider and GPS.
+     * At the first time it used Network Provider.
+     * After that when location is updated it used gps to track your current location.
+     */
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void getLocation() {
         try {
@@ -202,11 +235,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                     locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MapsActivity.MIN_TIME_BW_UPDATES, MapsActivity.MIN_DISTANCE_CHANGE_FOR_UPDATES, MapsActivity.this);
-                    if (locationManager != null) {
-                        location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                        if (location != null) {
-                            Toast.makeText(this, "isNetwork Enables", Toast.LENGTH_SHORT).show();
-                        }
+                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (location != null) {
+                        Toast.makeText(this, "isNetwork Enables", Toast.LENGTH_SHORT).show();
                     }
                 }
                 //get the location by gps
@@ -214,11 +245,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (location == null) {
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
                         //Log.d("GPS Enabled", "GPS Enabled");
-                        if (locationManager != null) {
-                            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                            if (location != null) {
-                                Toast.makeText(this, "is Gps Enables", Toast.LENGTH_SHORT).show();
-                            }
+                        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                        if (location != null) {
+                            Toast.makeText(this, "is Gps Enables", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -229,7 +258,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-
+    /**
+     * Method is called when request for a permission.
+     */
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -241,127 +272,105 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             return;
                         }
                         getLocation();
-                        loadMap(mGoogleMap);
                         mGoogleMap.setMyLocationEnabled(true);
                         mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
                     }
-
-                    return;
                 }
-
         }
     }
 
+    /**
+     * Method is called when you click on the map.
+     * this method is used for add marker where you clicked.
+     */
     @Override
     public void onMapClick(LatLng latLng) {
-
-       /* // Already two locations
-        if (mMarkerPoints.size() > 1) {
-            mMarkerPoints.clear();
-            mGoogleMap.clear();
-        }*/
-
-        if(mEditTextSource.hasFocus()){
-            if(mOrigin!=null){
+        if (mEditTextSource.hasFocus()) {
+            if (mOrigin != null) {
                 mMarkerPoints.remove(mOrigin);
-                count--;
-            }else {
-                mMarkerOrigin=mGoogleMap.addMarker(mOriginMarkerOption.position(latLng));
+                mCount--;
+            } else {
+                mMarkerOrigin = mGoogleMap.addMarker(mOriginMarkerOption.position(latLng));
             }
-            mOrigin=latLng;
+            mOrigin = latLng;
             mMarkerOrigin.setPosition(mOrigin);
-            count++;
-            mEditTextSource.setText(getAddress(latLng.latitude,latLng.longitude));
+            mCount++;
+            mEditTextSource.setText(getAddress(latLng.latitude, latLng.longitude));
             mMarkerPoints.add(mOrigin);
-        }
-        else if(mEditTextDestination.hasFocus()){
-            if(mDest!=null){
+        } else if (mEditTextDestination.hasFocus()) {
+            if (mDest != null) {
                 mMarkerPoints.remove(mDest);
-                count--;
-            }else {
-                mMarkerDest=mGoogleMap.addMarker(mDestMarkerOption.position(latLng));
+                mCount--;
+            } else {
+                mMarkerDest = mGoogleMap.addMarker(mDestMarkerOption.position(latLng));
             }
-            mDest=latLng;
+            mDest = latLng;
             mMarkerDest.setPosition(mDest);
-            count++;
-            mEditTextDestination.setText(getAddress(latLng.latitude,latLng.longitude));
+            mCount++;
+            mEditTextDestination.setText(getAddress(latLng.latitude, latLng.longitude));
             mMarkerPoints.add(mDest);
         }
 
-        if(count>=2){
+        if (mCount >= 2) {
             String url = getDirectionsUrl(mOrigin, mDest);
-            DownloadTask downloadTask=new DownloadTask();
+            DownloadTask downloadTask = new DownloadTask();
             downloadTask.execute(url);
         }
 
     }
 
+    /**
+     * Method is used to get Direction URL by Origin and Destination LatLng.
+     */
     public String getDirectionsUrl(LatLng origin, LatLng dest) {
-
-        // Origin of route
         String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
-
-        // Destination of route
         String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
-
-        // Sensor enabled
         String sensor = "sensor=false";
         String mode = "mode=driving";
-
-        // Building the parameters to the web service
         String parameters = str_origin + "&" + str_dest + "&" + sensor + "&" + mode;
-
-        // Output format
         String output = "json";
-
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
-
-
-        return url;
+        return "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
     }
 
+    /**
+     * Method is used to get JSON Data from Direction Url.
+     */
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public String downloadUrl(String strUrl) throws IOException {
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
-        try {
-            URL url = new URL(strUrl);
+        String data = null;
+        HttpURLConnection urlConnection;
+        URL url = new URL(strUrl);
+        urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.connect();
 
-            urlConnection = (HttpURLConnection) url.openConnection();
+        try (InputStream iStream = urlConnection.getInputStream()) {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(iStream));
+            StringBuilder stringBuilder = new StringBuilder();
 
-            urlConnection.connect();
-
-            iStream = urlConnection.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-
-            StringBuffer sb = new StringBuffer();
-
-            String line = "";
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                stringBuilder.append(line);
             }
 
-            data = sb.toString();
-
-            br.close();
+            data = stringBuilder.toString();
+            bufferedReader.close();
 
         } catch (Exception e) {
             Log.d("Exception", e.toString());
         } finally {
-            iStream.close();
             urlConnection.disconnect();
         }
         return data;
     }
 
-    public class DownloadTask extends AsyncTask<String,Integer,String> {
+    /**
+     * this class is used to get JSON data in non-ui thread by AsyncTask.
+     */
+    private class DownloadTask extends AsyncTask<String, Integer, String> {
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         @Override
         protected String doInBackground(String... url) {
-
             String data = "";
-
             try {
                 data = downloadUrl(url[0]);
             } catch (Exception e) {
@@ -375,27 +384,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             super.onPostExecute(result);
 
             ParserTask parserTask = new ParserTask();
-
-
             parserTask.execute(result);
-
         }
-
-
     }
 
-    public class ParserTask extends AsyncTask<Object, Object, List<List<HashMap<String, String>>>> {
+    /**
+     * this class is used to Parsing the data in non-ui thread by AsyncTask.
+     */
+    private class ParserTask extends AsyncTask<Object, Object, List<List<HashMap<String, String>>>> {
         // Parsing the data in non-ui thread
         @Override
         protected List<List<HashMap<String, String>>> doInBackground(Object... jsonData) {
-
             JSONObject jObject;
             List<List<HashMap<String, String>>> routes = null;
 
             try {
                 jObject = new JSONObject((String) jsonData[0]);
                 DirectionsJSONParser parser = new DirectionsJSONParser();
-
                 routes = parser.parse(jObject);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -405,18 +410,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList points = null;
+            ArrayList<LatLng> points;
             PolylineOptions lineOptions = null;
-            MarkerOptions markerOptions = new MarkerOptions();
 
-            for (int i = 0; i < result.size(); i++) {
-                points = new ArrayList();
+            for (int row = 0; row < result.size(); row++) {
+                points = new ArrayList<>();
                 lineOptions = new PolylineOptions();
 
-                List<HashMap<String, String>> path = result.get(i);
+                List<HashMap<String, String>> path = result.get(row);
 
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap point = path.get(j);
+                for (int column = 0; column < path.size(); column++) {
+                    HashMap<String, String> point = path.get(column);
 
                     double lat = Double.parseDouble(String.valueOf(point.get("lat")));
                     double lng = Double.parseDouble(String.valueOf(point.get("lng")));
@@ -429,9 +433,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 lineOptions.width(12);
                 lineOptions.color(Color.RED);
                 lineOptions.geodesic(true);
-
             }
-// Drawing polyline in the Google Map for the i-th route
+            // Drawing polyline in the Google Map for the i-th route
             mGoogleMap.addPolyline(lineOptions);
         }
     }
